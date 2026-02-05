@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đấu Trường Hóa Học: Kim Loại (Bài 19)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            min-height: 100vh;
+        }
+        
+        /* Custom Animations */
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        .slide-up { animation: slideUp 0.5s ease-out; }
+        .bounce { animation: bounce 2s infinite; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        .option-card {
+            transition: all 0.2s;
+        }
+        .option-card:hover:not(.disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .option-card.selected {
+            border-width: 2px;
+            border-color: #3b82f6;
+        }
+        .option-card.correct {
+            background-color: #dcfce7 !important;
+            border-color: #22c55e !important;
+            color: #14532d;
+        }
+        .option-card.wrong {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #7f1d1d;
+        }
+
+        /* Progress Bar Animation */
+        .progress-bar {
+            transition: width 1s linear;
+        }
+        
+        /* Modal Overlay */
+        .modal {
+            background-color: rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- APP CONTAINER -->
+    <div id="app" class="max-w-4xl mx-auto min-h-screen flex flex-col p-4">
+        
+        <!-- HEADER -->
+        <header class="flex justify-between items-center py-4 mb-2">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-flask text-blue-600 text-2xl"></i>
+                <h1 class="text-xl font-bold text-blue-800 hidden sm:block">Hoá Học 12 - Kết Nối Tri Thức</h1>
+            </div>
+            <div class="text-sm font-semibold text-slate-600">
+                GV thiết kế: <span class="text-blue-600">Nguyễn Mạnh Hưng</span>
+            </div>
+        </header>
+
+        <!-- SCREENS -->
+
+        <!-- 1. START SCREEN -->
+        <div id="start-screen" class="flex-1 flex flex-col items-center justify-center slide-up bg-white rounded-2xl shadow-xl p-8 my-auto">
+            <div class="mb-6 text-6xl text-blue-500 bounce">
+                <i class="fa-solid fa-atom"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-center text-slate-800 mb-2">TÍNH CHẤT CỦA KIM LOẠI</h2>
+            <p class="text-slate-500 mb-8 text-center">Ôn tập Bài 19 - Sẵn sàng chinh phục điểm 10!</p>
+
+            <div class="w-full max-w-md space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Họ và tên học sinh</label>
+                    <input type="text" id="student-name" placeholder="Nhập họ tên của bạn..." class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Lớp</label>
+                    <input type="text" id="student-class" placeholder="Ví dụ: 12A1" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                </div>
+                
+                <button onclick="startGame()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> BẮT ĐẦU CHƠI
+                </button>
+
+                <div class="pt-4 border-t border-slate-100 mt-4">
+                    <button onclick="showTeacherDashboard()" class="w-full text-slate-500 hover:text-blue-600 text-sm font-medium transition">
+                        <i class="fa-solid fa-chalkboard-user"></i> Khu vực Giáo viên (Xem kết quả)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. GAME SCREEN -->
+        <div id="game-screen" class="hidden flex-1 flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden relative">
+            <!-- Top Bar: Progress & Score -->
+            <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-32 h-3 bg-slate-200 rounded-full overflow-hidden">
+                        <div id="progress-fill" class="h-full bg-blue-500 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <span id="question-tracker" class="text-sm font-bold text-slate-600">1/25</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1 text-amber-500 font-bold">
+                        <i class="fa-solid fa-star"></i>
+                        <span id="score-display">0</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="timer-display">15</span>s
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Area -->
+            <div class="flex-1 p-6 overflow-y-auto">
+                <div class="mb-2">
+                    <span id="badge-level" class="inline-block px-2 py-1 text-xs font-bold rounded uppercase tracking-wide bg-green-100 text-green-700">Nhận biết</span>
+                    <span id="badge-type" class="ml-2 inline-block px-2 py-1 text-xs font-bold rounded bg-gray-100 text-gray-600">Trắc nghiệm</span>
+                </div>
+                
+                <h3 id="question-text" class="text-xl md:text-2xl font-bold text-slate-800 mb-6 leading-relaxed">
+                    <!-- Question goes here -->
+                </h3>
+
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Options go here -->
+                </div>
+            </div>
+
+            <!-- Feedback Overlay (Absolute) -->
+            <div id="feedback-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center z-20 p-8 text-center fade-in">
+                <div id="feedback-icon" class="text-6xl mb-4"></div>
+                <h3 id="feedback-title" class="text-2xl font-bold mb-2"></h3>
+                <div class="text-left bg-slate-50 p-4 rounded-lg border border-slate-200 max-w-lg w-full mb-6">
+                    <p class="text-sm text-slate-500 font-bold mb-1">GIẢI THÍCH:</p>
+                    <p id="feedback-explanation" class="text-slate-700"></p>
+                </div>
+                <button onclick="nextQuestion()" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 transition">
+                    Câu tiếp theo <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. RESULT SCREEN -->
+        <div id="result-screen" class="hidden flex-1 flex flex-col items-center justify-center slide-up bg-white rounded-2xl shadow-xl p-8 my-auto">
+            <div class="text-center mb-8">
+                <div class="text-6xl text-amber-400 mb-4 animate-bounce">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-800">Hoàn Thành!</h2>
+                <p class="text-slate-500">Chúc mừng bạn đã hoàn thành bài ôn tập.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8 w-full max-w-md mb-8">
+                <div class="bg-blue-50 p-4 rounded-xl text-center">
+                    <div class="text-sm text-blue-600 font-bold uppercase">Tổng Điểm</div>
+                    <div class="text-4xl font-extrabold text-blue-800" id="final-score">0</div>
+                    <div class="text-xs text-blue-400">/ 100 điểm</div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-xl text-center">
+                    <div class="text-sm text-green-600 font-bold uppercase">Số câu đúng</div>
+                    <div class="text-4xl font-extrabold text-green-800" id="final-correct">0</div>
+                    <div class="text-xs text-green-400">/ 25 câu</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col w-full max-w-xs gap-3">
+                <button onclick="resetGame()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition text-center">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Chơi Lại
+                </button>
+                <button onclick="showReview()" class="bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-bold py-3 rounded-lg transition text-center">
+                    <i class="fa-solid fa-eye mr-2"></i> Xem lại đáp án
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. REVIEW SCREEN -->
+        <div id="review-screen" class="hidden flex-1 flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-lg">Chi tiết bài làm</h3>
+                <button onclick="goBackToResult()" class="text-slate-500 hover:text-slate-800">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div id="review-list" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Review items generated by JS -->
+            </div>
+        </div>
+
+        <!-- 5. TEACHER DASHBOARD -->
+        <div id="teacher-dashboard" class="hidden fixed inset-0 z-50 modal flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-blue-800">Bảng Kết Quả Lớp Học</h2>
+                        <p class="text-sm text-slate-500">Dữ liệu được lưu trên trình duyệt này.</p>
+                    </div>
+                    <button onclick="closeDashboard()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-auto p-6">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-slate-500 text-sm border-b border-slate-200">
+                                <th class="p-3">Thời gian</th>
+                                <th class="p-3">Họ và tên</th>
+                                <th class="p-3">Lớp</th>
+                                <th class="p-3 text-center">Điểm số</th>
+                                <th class="p-3 text-center">Số câu đúng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-table-body" class="text-slate-700">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                    <p id="no-data-msg" class="text-center text-slate-400 py-8 hidden">Chưa có dữ liệu nào được lưu.</p>
+                </div>
+
+                <div class="p-6 border-t border-slate-200 bg-slate-50 rounded-b-xl flex justify-between">
+                    <button onclick="clearAllData()" class="text-red-600 hover:bg-red-50 px-4 py-2 rounded font-medium transition">
+                        <i class="fa-solid fa-trash-can mr-2"></i> Xoá dữ liệu lớp
+                    </button>
+                    <button onclick="exportToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold shadow transition">
+                        <i class="fa-solid fa-file-excel mr-2"></i> Tải file Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AUDIO ELEMENTS -->
+    <!-- Note: Browsers block autoplay, sounds trigger on interaction -->
+    
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA: QUESTION BANK (25 Câu - SGK Hóa 12 KNTT Bài 19) ---
+        // Level: 1 (NB - 15s), 2 (TH - 30s), 3 (VD - 120s)
+        const questionBank = [
+            // --- MỨC ĐỘ 1: NHẬN BIẾT (9 Câu) ---
+            {
+                id: 1,
+                text: "Kim loại nào sau đây có tính dẫn điện tốt nhất?",
+                options: ["Copper (Đồng)", "Aluminium (Nhôm)", "Silver (Bạc)", "Iron (Sắt)"],
+                correct: "Silver (Bạc)",
+                explanation: "Thứ tự dẫn điện giảm dần: Ag > Cu > Au > Al > Fe.",
+                level: 1,
+                type: "Trắc nghiệm"
+            },
+            {
+                id: 2,
+                text: "Ở điều kiện thường, kim loại nào sau đây ở trạng thái lỏng?",
+                options: ["Sodium (Natri)", "Mercury (Thủy ngân)", "Magnesium (Magie)", "Aluminium (Nhôm)"],
+                correct: "Mercury (Thủy ngân)",
+                explanation: "Mercury (Thủy ngân) là kim loại duy nhất ở thể lỏng ở điều kiện thường.",
+                level: 1,
+                type: "Trắc nghiệm"
+            },
+            {
+                id: 3,
+                text: "Tính chất vật lí chung của kim loại (tính dẻo, dẫn điện, dẫn nhiệt, ánh kim) gây nên bởi yếu tố nào?",
+                options: ["Các ion dương kim loại", "Mạng tinh thể kim loại", "Các electron tự do", "Khối lượng nguyên tử"],
+                correct: "Các electron tự do",
+                explanation: "Các electron tự do trong mạng tinh thể kim loại là nguyên nhân gây ra các tính chất vật lí chung.",
+                level: 1,
+                type: "Trắc nghiệm"
+            },
+            {
+                id: 4,
+                text: "Trong các phản ứng hóa học, kim loại thể hiện tính chất gì đặc trưng?",
+                options: ["Tính oxi hóa", "Tính khử", "Tính acid", "Tính base"],
+                correct: "Tính khử",
+                explanation: "Kim loại dễ nhường electron nên thể hiện tính khử: M → Mⁿ⁺ + ne.",
+                level: 1,
+                type: "Trắc nghiệm"
+            },
+            {
+                id: 5,
+                text: "Kim loại nào sau đây <b>không</b> tan được trong dung dịch Hydrochloric acid (HCl) loãng?",
+                options: ["Fe", "Mg", "Cu", "Al"],
+                correct: "Cu",
+                explanation: "Copper (Đồng) đứng sau Hiđro trong dãy hoạt động hóa học nên không tác dụng với dung dịch HCl.",
+                level: 1,
+                type: "Trắc nghiệm"
+            },
+            {
+                id: 6,
+                text: "Tính chất vật lý nào sau đây <b>không</b> phải là tính chất vật lý chung của kim loại?",
+                options: ["Tính dẻo", "Tính dẫn điện", "Tính cứng", "Ánh kim"],
+                correct: "Tính cứng",
+                explanation: "Tính chất vật lý chung (dẻo, dẫn điện, dẫn nhiệt, ánh kim) do electron tự do gây ra. Tính cứng là tính chất riêng phụ thuộc vào độ bền liên kết kim loại.",
+                level: 1,
+                type: "Lý thuyết"
+            },
+            {
+                id: 7,
+                text: "Sản phẩm khi cho Iron (Sắt) tác dụng với khí Chlorine (Cl₂) dư là:",
+                options: ["Iron(II) chloride (FeCl₂)", "Iron(III) chloride (FeCl₃)", "Hỗn hợp FeCl₂ và FeCl₃", "Fe không phản ứng"],
+                correct: "Iron(III) chloride (FeCl₃)",
+                explanation: "Chlorine là chất oxi hóa mạnh, sẽ oxi hóa sắt lên hóa trị cao nhất là sắt(III): 2Fe + 3Cl₂ → 2FeCl₃.",
+                level: 1,
+                type: "Trắc nghiệm"
+            },
+            {
+                id: 8,
+                text: "Kim loại nào sau đây nhẹ nhất?",
+                options: ["Lithium (Liti)", "Sodium (Natri)", "Aluminium (Nhôm)", "Osmium (Osmi)"],
+                correct: "Lithium (Liti)",
+                explanation: "Lithium (Liti) có khối lượng riêng nhỏ nhất (~0.53 g/cm³), là kim loại nhẹ nhất.",
+                level: 1,
+                type: "Trắc nghiệm"
+            },
+            {
+                id: 9,
+                text: "Kim loại nào có nhiệt độ nóng chảy cao nhất, thường dùng làm dây tóc bóng đèn?",
+                options: ["Iron (Sắt)", "Chromium (Crom)", "Tungsten (Vonfram)", "Copper (Đồng)"],
+                correct: "Tungsten (Vonfram)",
+                explanation: "Tungsten (Vonfram) có nhiệt độ nóng chảy khoảng 3410°C, cao nhất trong các kim loại.",
+                level: 1,
+                type: "Trắc nghiệm"
+            },
+
+            // --- MỨC ĐỘ 2: THÔNG HIỂU (9 Câu) ---
+            {
+                id: 10,
+                text: "Tại sao Aluminium (Nhôm) hoạt động mạnh nhưng lại bền trong không khí và nước?",
+                options: ["Do Aluminium là kim loại quý", "Do có lớp màng Aluminium oxide (Al₂O₃) bền vững bảo vệ", "Do Al không phản ứng với Oxygen", "Do cấu tạo mạng tinh thể đặc biệt"],
+                correct: "Do có lớp màng Aluminium oxide (Al₂O₃) bền vững bảo vệ",
+                explanation: "Lớp màng oxit Al₂O₃ rất mỏng, mịn và bền chắc, ngăn cản Al bên trong tiếp xúc với môi trường.",
+                level: 2,
+                type: "Giải thích"
+            },
+            {
+                id: 11,
+                text: "Khi cho dây Copper (Đồng) vào dung dịch Silver nitrate (AgNO₃), hiện tượng quan sát được là gì?",
+                options: ["Dung dịch chuyển màu xanh, có chất rắn màu xám bám vào dây đồng", "Không có hiện tượng gì", "Có khí thoát ra, dung dịch nhạt màu", "Dây đồng tan hết, dung dịch không màu"],
+                correct: "Dung dịch chuyển màu xanh, có chất rắn màu xám bám vào dây đồng",
+                explanation: "Cu đẩy Ag ra khỏi muối: Cu + 2AgNO₃ → Cu(NO₃)₂ (xanh lam) + 2Ag (xám trắng).",
+                level: 2,
+                type: "Hiện tượng"
+            },
+            {
+                id: 12,
+                text: "Kim loại nào sau đây rất mềm, có thể cắt dễ dàng bằng dao?",
+                options: ["Chromium (Crom)", "Iron (Sắt)", "Sodium (Natri)", "Copper (Đồng)"],
+                correct: "Sodium (Natri)",
+                explanation: "Các kim loại kiềm (nhóm IA) như Sodium (Na), Potassium (K) có mạng tinh thể rỗng, liên kết kim loại yếu nên rất mềm.",
+                level: 2,
+                type: "Tính chất vật lý"
+            },
+            {
+                id: 13,
+                text: "Kim loại Copper (Đồng) tác dụng được với dung dịch nào sau đây?",
+                options: ["Hydrochloric acid (HCl)", "Iron(II) chloride (FeCl₂)", "Iron(III) chloride (FeCl₃)", "Zinc sulfate (ZnSO₄)"],
+                correct: "Iron(III) chloride (FeCl₃)",
+                explanation: "Cu có tính khử mạnh hơn Fe²⁺ nhưng yếu hơn Fe. Cu tác dụng với muối Fe³⁺: Cu + 2FeCl₃ → CuCl₂ + 2FeCl₂.",
+                level: 2,
+                type: "Tính chất hóa học"
+            },
+            {
+                id: 14,
+                text: "Phản ứng nào sau đây viết SAI?",
+                options: ["2Al + 3Cl₂ → 2AlCl₃", "Fe + S → FeS", "Cu + H₂SO₄ (loãng) → CuSO₄ + H₂", "2Na + 2H₂O → 2NaOH + H₂"],
+                correct: "Cu + H₂SO₄ (loãng) → CuSO₄ + H₂",
+                explanation: "Copper (Đồng) đứng sau H, không tác dụng với acid loại 1 (HCl, H₂SO₄ loãng).",
+                level: 2,
+                type: "Tìm lỗi sai"
+            },
+            {
+                id: 15,
+                text: "Tại sao người ta dùng dây Copper (Đồng) hoặc Aluminium (Nhôm) làm dây dẫn điện thay vì dùng Gold (Vàng), Silver (Bạc)?",
+                options: ["Vì Đồng và Nhôm dẫn điện tốt hơn Vàng, Bạc", "Vì Đồng và Nhôm nhẹ hơn", "Vì Đồng và Nhôm rẻ hơn nhiều và dẫn điện tốt", "Vì Vàng, Bạc quá cứng không kéo sợi được"],
+                correct: "Vì Đồng và Nhôm rẻ hơn nhiều và dẫn điện tốt",
+                explanation: "Silver dẫn điện tốt nhất nhưng quá đắt. Copper và Aluminium dẫn điện tốt (sau Silver) và giá thành hợp lý cho công nghiệp.",
+                level: 2,
+                type: "Thực tiễn"
+            },
+            {
+                id: 16,
+                text: "ĐÚNG hay SAI: Iron (Sắt) tác dụng với Sulfuric acid (H₂SO₄) đặc, nguội tạo ra muối Iron(III) sulfate?",
+                options: ["Đúng", "Sai"],
+                correct: "Sai",
+                explanation: "Fe, Al, Cr bị THỤ ĐỘNG HÓA trong H₂SO₄ đặc nguội và HNO₃ đặc nguội (không phản ứng).",
+                level: 2,
+                type: "Đúng/Sai"
+            },
+            {
+                id: 17,
+                text: "Cation kim loại M²⁺ có cấu hình electron lớp ngoài cùng là 2s²2p⁶. Vị trí của M trong bảng tuần hoàn là:",
+                options: ["Chu kì 3, nhóm IIA", "Chu kì 2, nhóm VIIIA", "Chu kì 3, nhóm VIA", "Chu kì 4, nhóm IIA"],
+                correct: "Chu kì 3, nhóm IIA",
+                explanation: "M²⁺ có 10e (cấu hình Ne). Vậy M có 12e (1s²2s²2p⁶3s²). M là Magnesium (Magie), ô 12, chu kì 3, nhóm IIA.",
+                level: 2,
+                type: "Cấu tạo"
+            },
+            {
+                id: 18,
+                text: "Sản phẩm khi đốt cháy dây Iron (Sắt) trong khí Oxygen (O₂) là gì?",
+                options: ["Iron(II) oxide (FeO)", "Iron(III) oxide (Fe₂O₃)", "Iron(II, III) oxide (Fe₃O₄)", "Không phản ứng"],
+                correct: "Iron(II, III) oxide (Fe₃O₄)",
+                explanation: "Sắt cháy sáng trong oxi tạo ra oxit sắt từ (Fe₃O₄), hay còn gọi là Iron(II, III) oxide.",
+                level: 2,
+                type: "Phản ứng hóa học"
+            },
+
+            // --- MỨC ĐỘ 3: VẬN DỤNG (7 Câu) ---
+            {
+                id: 19,
+                text: "Cho m gam hỗn hợp Mg và Fe tác dụng hết với dung dịch HCl, thu được khí H₂. Nếu thay Fe bằng Cu cùng khối lượng thì thể tích khí H₂ thoát ra sẽ thay đổi như thế nào?",
+                options: ["Tăng lên", "Giảm đi", "Không đổi", "Không xác định được"],
+                correct: "Giảm đi",
+                explanation: "Fe tác dụng với HCl sinh ra H₂, còn Cu không tác dụng. Do đó lượng khí sinh ra sẽ giảm đi (chỉ còn do Mg sinh ra).",
+                level: 3,
+                type: "Suy luận"
+            },
+            {
+                id: 20,
+                text: "Kim loại nào sau đây tan hết trong nước dư ở nhiệt độ thường?",
+                options: ["Iron (Sắt)", "Sodium (Natri)", "Copper (Đồng)", "Silver (Bạc)"],
+                correct: "Sodium (Natri)",
+                explanation: "Sodium (Natri) là kim loại kiềm, phản ứng mãnh liệt với nước ở nhiệt độ thường tạo dung dịch Base và khí Hydrogen.",
+                level: 3,
+                type: "Thí nghiệm"
+            },
+            {
+                id: 21,
+                text: "Tại sao không dùng xô, chậu bằng Aluminium (Nhôm) để đựng vôi tôi hoặc nước xà phòng?",
+                options: ["Vì nhôm giòn, dễ vỡ", "Vì nhôm phản ứng được với dung dịch kiềm", "Vì nhôm tác dụng với nước trong dung dịch", "Vì nhôm nặng, khó di chuyển"],
+                correct: "Vì nhôm phản ứng được với dung dịch kiềm",
+                explanation: "Lớp oxit Al₂O₃ và bản thân Al đều tan trong dung dịch kiềm (vôi, xà phòng có tính base), làm thủng vật dụng.",
+                level: 3,
+                type: "Đời sống"
+            },
+            {
+                id: 22,
+                text: "Cho m gam Iron (Sắt) tác dụng hết với dung dịch Copper(II) sulfate (CuSO₄) dư, thu được 9,6 gam kim loại Copper (Đồng). Giá trị của m là (cho Fe=56, Cu=64):",
+                options: ["5,6 gam", "8,4 gam", "11,2 gam", "2,8 gam"],
+                correct: "8,4 gam",
+                explanation: "Phương trình: Fe + CuSO₄ → FeSO₄ + Cu. <br>nCu = 9,6 / 64 = 0,15 mol. <br>Theo PT: nFe = nCu = 0,15 mol. <br>→ mFe = 0,15 × 56 = 8,4 gam.",
+                level: 3,
+                type: "Tính toán"
+            },
+            {
+                id: 23,
+                text: "Đốt cháy hoàn toàn 5,4 gam kim loại Aluminium (Nhôm) trong khí Chlorine (Cl₂) dư. Khối lượng muối Aluminium chloride (AlCl₃) thu được là (cho Al=27, Cl=35,5):",
+                options: ["26,7 gam", "13,35 gam", "53,4 gam", "20,5 gam"],
+                correct: "26,7 gam",
+                explanation: "nAl = 5,4 / 27 = 0,2 mol. <br>PT: 2Al + 3Cl₂ → 2AlCl₃. <br>Theo PT: nAlCl₃ = nAl = 0,2 mol. <br>mMuối = 0,2 × (27 + 35,5×3) = 26,7 gam.",
+                level: 3,
+                type: "Tính toán"
+            },
+            {
+                id: 24,
+                text: "Kim loại nào sau đây có độ cứng cao nhất, có thể dùng để cắt thủy tinh?",
+                options: ["Iron (Sắt)", "Silver (Bạc)", "Chromium (Crom)", "Aluminium (Nhôm)"],
+                correct: "Chromium (Crom)",
+                explanation: "Chromium (Crom) là kim loại cứng nhất, có thể rạch được thủy tinh.",
+                level: 3,
+                type: "Tính chất vật lý"
+            },
+            {
+                id: 25,
+                text: "Nung nóng hỗn hợp bột gồm Al và Iron(III) oxide (Fe₂O₃) trong điều kiện không có không khí thu được hỗn hợp chất rắn X. Cho X tác dụng với dung dịch NaOH dư thấy có khí thoát ra. Vậy trong X chứa:",
+                options: ["Al, Fe, Al₂O₃", "Fe, Al₂O₃, Fe₂O₃ dư", "Fe, Al₂O₃, Al dư", "Chỉ có Fe và Al₂O₃"],
+                correct: "Fe, Al₂O₃, Al dư",
+                explanation: "X + NaOH có khí H₂ bay ra chứng tỏ trong X còn dư Al (vì Fe và oxit sắt không tác dụng NaOH giải phóng khí).",
+                level: 3,
+                type: "Tổng hợp"
+            }
+        ];
+
+        // --- APP STATE ---
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let correctCount = 0;
+        let timerInterval;
+        let timeLeft = 0;
+        let studentInfo = { name: "", class: "" };
+        let userAnswers = []; // Store for review
+
+        // --- DOM ELEMENTS ---
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-screen'),
+            result: document.getElementById('result-screen'),
+            review: document.getElementById('review-screen')
+        };
+        
+        const ui = {
+            questionText: document.getElementById('question-text'),
+            optionsContainer: document.getElementById('options-container'),
+            progressFill: document.getElementById('progress-fill'),
+            tracker: document.getElementById('question-tracker'),
+            score: document.getElementById('score-display'),
+            timer: document.getElementById('timer-display'),
+            badgeLevel: document.getElementById('badge-level'),
+            feedback: document.getElementById('feedback-overlay'),
+            feedbackTitle: document.getElementById('feedback-title'),
+            feedbackIcon: document.getElementById('feedback-icon'),
+            feedbackExplanation: document.getElementById('feedback-explanation')
+        };
+
+        // --- CORE FUNCTIONS ---
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            const name = document.getElementById('student-name').value.trim();
+            const className = document.getElementById('student-class').value.trim();
+
+            if (!name || !className) {
+                alert("Vui lòng nhập đầy đủ Họ tên và Lớp!");
+                return;
+            }
+
+            studentInfo = { name, class: className };
+            
+            // Clone and Shuffle Questions
+            currentQuestions = JSON.parse(JSON.stringify(questionBank));
+            // Shuffle questions for randomness
+            shuffle(currentQuestions);
+
+            currentIndex = 0;
+            score = 0;
+            correctCount = 0;
+            userAnswers = [];
+
+            switchScreen('game');
+            loadQuestion();
+        }
+
+        function switchScreen(screenName) {
+            Object.values(screens).forEach(el => el.classList.add('hidden'));
+            screens[screenName].classList.remove('hidden');
+            if(screenName === 'game' || screenName === 'result') {
+                screens[screenName].classList.add('fade-in');
+            }
+        }
+
+        function loadQuestion() {
+            const q = currentQuestions[currentIndex];
+            
+            // Set Timers based on Level
+            const times = { 1: 15, 2: 30, 3: 120 };
+            timeLeft = times[q.level];
+            
+            // Update UI
+            ui.questionText.innerHTML = q.text;
+            ui.tracker.innerText = `Câu ${currentIndex + 1}/${currentQuestions.length}`;
+            ui.score.innerText = score;
+            ui.timer.innerText = timeLeft;
+            ui.timer.parentElement.className = "flex items-center gap-1 text-slate-700 font-bold bg-slate-100 px-3 py-1 rounded-full"; // reset color
+
+            // Badge styling
+            const levelNames = {1: "Nhận biết", 2: "Thông hiểu", 3: "Vận dụng"};
+            const levelColors = {1: "bg-green-100 text-green-700", 2: "bg-yellow-100 text-yellow-700", 3: "bg-red-100 text-red-700"};
+            ui.badgeLevel.innerText = levelNames[q.level];
+            ui.badgeLevel.className = `inline-block px-2 py-1 text-xs font-bold rounded uppercase tracking-wide ${levelColors[q.level]}`;
+
+            // Shuffle Options
+            // Store original correct answer text to compare later
+            let options = [...q.options];
+            if (q.type !== "Đúng/Sai") {
+                shuffle(options);
+            }
+            
+            ui.optionsContainer.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-card w-full text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-blue-400 text-slate-700 font-medium text-lg";
+                btn.innerHTML = opt;
+                btn.onclick = () => checkAnswer(opt, q);
+                ui.optionsContainer.appendChild(btn);
+            });
+
+            // Update Progress Bar
+            const progress = ((currentIndex) / currentQuestions.length) * 100;
+            ui.progressFill.style.width = `${progress}%`;
+
+            // Start Timer
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                ui.timer.innerText = timeLeft;
+                
+                // Visual warning
+                if (timeLeft <= 5) {
+                    ui.timer.parentElement.className = "flex items-center gap-1 text-red-600 font-bold bg-red-100 px-3 py-1 rounded-full animate-pulse";
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function handleTimeOut() {
+            const q = currentQuestions[currentIndex];
+            showFeedback(false, null, q); // Time out counts as wrong
+        }
+
+        function checkAnswer(selectedOption, questionObj) {
+            clearInterval(timerInterval);
+            const isCorrect = selectedOption === questionObj.correct;
+            showFeedback(isCorrect, selectedOption, questionObj);
+        }
+
+        function showFeedback(isCorrect, selectedOption, questionObj) {
+            // Disable all buttons
+            const buttons = ui.optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('disabled');
+                if (btn.innerText === questionObj.correct) {
+                    btn.classList.add('correct');
+                } else if (btn.innerText === selectedOption && !isCorrect) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            // Calculate Score
+            let points = 0;
+            if (isCorrect) {
+                points = 4; // 100 points / 25 q = 4
+                score += points;
+                correctCount++;
+                // Sound effect could go here
+            }
+
+            // Save for review
+            userAnswers.push({
+                question: questionObj,
+                selected: selectedOption || "Hết giờ",
+                isCorrect: isCorrect
+            });
+
+            // Show Overlay Modal
+            setTimeout(() => {
+                ui.feedback.classList.remove('hidden');
+                
+                if (isCorrect) {
+                    ui.feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 bounce"></i>';
+                    ui.feedbackTitle.innerText = "Chính Xác! (+4 điểm)";
+                    ui.feedbackTitle.className = "text-2xl font-bold mb-2 text-green-600";
+                } else {
+                    ui.feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500"></i>';
+                    ui.feedbackTitle.innerText = "Tiếc quá, sai rồi!";
+                    ui.feedbackTitle.className = "text-2xl font-bold mb-2 text-red-600";
+                }
+                
+                ui.feedbackExplanation.innerHTML = `<strong class="text-blue-600">Đáp án đúng: ${questionObj.correct}</strong><br>${questionObj.explanation}`;
+            }, 800);
+        }
+
+        function nextQuestion() {
+            ui.feedback.classList.add('hidden');
+            currentIndex++;
+            
+            if (currentIndex < currentQuestions.length) {
+                loadQuestion();
+            } else {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            // Save Data to LocalStorage
+            saveResultToStorage();
+
+            // Show Result Screen
+            switchScreen('result');
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-correct').innerText = correctCount;
+        }
+
+        function resetGame() {
+            // Soft reset to Start Screen without reloading page to preserve Storage integrity
+            document.getElementById('student-name').value = '';
+            document.getElementById('student-class').value = '';
+            
+            // Clear internals
+            score = 0;
+            correctCount = 0;
+            currentIndex = 0;
+            currentQuestions = [];
+            userAnswers = [];
+            
+            // UI Reset
+            document.getElementById('progress-fill').style.width = '0%';
+            
+            switchScreen('start');
+        }
+
+        // --- REVIEW & TEACHER LOGIC ---
+
+        function showReview() {
+            switchScreen('review');
+            const list = document.getElementById('review-list');
+            list.innerHTML = "";
+
+            userAnswers.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-lg border ${item.isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`;
+                
+                div.innerHTML = `
+                    <div class="flex justify-between mb-2">
+                        <span class="font-bold text-slate-700">Câu ${idx + 1}</span>
+                        <span class="text-xs font-bold px-2 py-1 rounded ${item.isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">
+                            ${item.isCorrect ? 'ĐÚNG' : 'SAI'}
+                        </span>
+                    </div>
+                    <p class="mb-2 font-medium text-slate-800">${item.question.text}</p>
+                    <div class="text-sm">
+                        <p class="${item.isCorrect ? 'text-green-700' : 'text-red-600'}"><span class="font-bold">Bạn chọn:</span> ${item.selected}</p>
+                        ${!item.isCorrect ? `<p class="text-green-700"><span class="font-bold">Đáp án đúng:</span> ${item.question.correct}</p>` : ''}
+                        <p class="text-slate-500 mt-2 text-xs italic bg-white p-2 rounded border border-slate-100">${item.question.explanation}</p>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function goBackToResult() {
+            switchScreen('result');
+        }
+
+        // --- LOCAL STORAGE MANAGER ---
+        const STORAGE_KEY = 'chemistry_game_results_class_12';
+
+        function saveResultToStorage() {
+            const resultRecord = {
+                timestamp: new Date().toLocaleString('vi-VN'),
+                name: studentInfo.name,
+                class: studentInfo.class,
+                score: score,
+                correct: correctCount
+            };
+
+            let currentData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            currentData.push(resultRecord);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+        }
+
+        function showTeacherDashboard() {
+            const modal = document.getElementById('teacher-dashboard');
+            const tbody = document.getElementById('result-table-body');
+            const noData = document.getElementById('no-data-msg');
+            
+            modal.classList.remove('hidden');
+            
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            
+            // Sort by Score DESC
+            data.sort((a, b) => b.score - a.score);
+
+            tbody.innerHTML = "";
+            if (data.length === 0) {
+                noData.classList.remove('hidden');
+            } else {
+                noData.classList.add('hidden');
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-slate-100 hover:bg-slate-50";
+                    tr.innerHTML = `
+                        <td class="p-3 text-sm">${row.timestamp}</td>
+                        <td class="p-3 font-bold text-blue-700">${row.name}</td>
+                        <td class="p-3">${row.class}</td>
+                        <td class="p-3 text-center font-bold text-amber-600">${row.score}</td>
+                        <td class="p-3 text-center">${row.correct}/25</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function closeDashboard() {
+            document.getElementById('teacher-dashboard').classList.add('hidden');
+        }
+
+        function clearAllData() {
+            if(confirm("Thầy Hưng có chắc chắn muốn xoá toàn bộ dữ liệu của lớp không? Hành động này không thể hoàn tác.")) {
+                localStorage.removeItem(STORAGE_KEY);
+                showTeacherDashboard(); // Refresh view
+            }
+        }
+
+        function exportToCSV() {
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+            if (data.length === 0) {
+                alert("Không có dữ liệu để xuất!");
+                return;
+            }
+
+            // CSV Header with BOM for correct UTF-8 encoding in Excel
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "Thời gian,Họ và tên,Lớp,Điểm số,Số câu đúng\n";
+
+            // Rows
+            data.forEach(row => {
+                csvContent += `${row.timestamp},"${row.name}",${row.class},${row.score},${row.correct}\n`;
+            });
+
+            // Download trigger
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Ket_Qua_Hoa_12_Bai_19.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+    </script>
+</body>
+</html>
